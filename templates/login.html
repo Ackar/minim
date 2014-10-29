@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Login - Minim</title>
+<link rel="icon" type="image/png" href="/static/img/favicon.png" />
+<link rel="stylesheet" type="text/css" href="/static/css/styles.css" />
+</head>
+<body id="login">
+<h1>Minim</h1>
+<p>{{.Error}}</p>
+<form action="/login" method="post">
+  <input type="text" name="email" placeholder="email" value="{{.Email}}" /><br />
+  <input type="password" name="password" placeholder="password" /><br />
+  <input type="submit" value="Login" name="login" />
+  <input type="submit" value="Create account" name="create" />
+</form>
+</body>
+</html>

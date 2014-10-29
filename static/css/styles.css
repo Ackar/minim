@@ -1,0 +1,185 @@
+body {
+  background: white;
+  font-family: "Georgia";
+}
+
+div#content {
+  width: 50%;
+  min-height: 400px;
+  margin: 42px auto;
+  font-family: "Georgia";
+  font-size: 1.2em;
+  line-height: 1.5em;
+  border: none;
+  outline: 0;
+}
+
+  h1, h2, h3 {
+    font-size: 1em;
+    margin: 0;
+    padding: 0;
+    display: inline;
+    font-weight: normal;
+    font-style: italic;
+  }
+
+  h1 {
+    font-size: 1.3em;
+  }
+
+  h2 {
+    font-size: 1.2em;
+  }
+
+  h3 {
+    font-size: 1.1em;
+  }
+
+div#menu {
+  position: fixed;
+  top: 10px;
+  left: 20px;
+}
+
+hr {
+  display: inline;
+  width: 0;
+  margin: 0;
+  padding: 0;
+  visibility: hidden;
+}
+
+ol {
+  padding: 0 0 0 10px;
+  margin: 5px 10px;
+}
+
+ol ol {
+  font-size: 0.9em;
+}
+
+#menu a {
+  color: gray;
+  text-decoration: none;
+}
+
+  #menu a:hover {
+    color: gray;
+    text-decoration: underline;
+  }
+
+  h1#docTitle {
+    display: block;
+    font-size: 1.8em;
+    text-align: center;
+    margin: auto;
+    outline: 0;
+  }
+
+ul#docList {
+  margin: 0;
+  padding: 0;
+}
+
+ul#docList li {
+  display: block;
+  margin: 10px auto;
+  width: 50%;
+  padding: 20px;
+  border-left: 1px solid black;
+}
+
+ul#docList li a.title {
+  color: black;
+  text-decoration: none;
+  font-family: "Georgia";
+  font-size: 1.5em;
+}
+
+ul#docList li span.delete a {
+  display: inline-block;
+  font-size: 1em;
+  text-decoration: underline;
+  padding-top: 10px;
+}
+
+ul#docList li span.delete a:hover {
+  text-decoration: none;
+}
+
+a#newDoc {
+  color: black;
+}
+
+a#newDoc:hover {
+  text-decoration: none;
+}
+
+.hidden {
+  display: none;
+  padding-top: 10px;
+}
+
+a {
+  color: black;
+  text-decoration: underline;
+}
+
+  a:hover {
+    text-decoration: none;
+  }
+
+.imgDropdown {
+  color: gray;
+  font-weight: italic;
+}
+
+.imgPreview {
+  max-width: 80%;
+  height: auto;
+  margin: auto;
+  display: block;
+}
+
+ul#actions {
+  position: fixed;
+  right: 0;
+}
+
+
+body#login h1 {
+  margin: 10px auto;
+  display: block;
+  width: 500px;
+  height: 237px;
+  text-indent: -9999px;
+  background: transparent url(/static/img/logo.png) center no-repeat;
+}
+
+form {
+  margin: auto;
+  width: 400px;
+  height: 200px;
+  text-align: center;
+}
+
+input {
+  border: 1px solid gray;
+  padding: 10px;
+  font-size: 1.05em;
+  margin: 5px;
+  font-family: arial;
+  width: 350px;
+}
+
+input[type=submit] {
+  background: #329abd;
+  color: white;
+  border: none;
+  font-style: italic;
+  width: 175px;
+}
+
+input[type=submit]:hover {
+  background: #226880;
+}

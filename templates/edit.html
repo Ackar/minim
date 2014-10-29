@@ -1,0 +1,174 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>{{.Title}} - Minim</title>
+<script src="/static/js/jquery.min.js"></script>
+<script src="/static/js/rangy-core.min.js"></script>
+<script src="/static/js/rangy-selectionsaverestore.min.js"></script>
+<script src="/static/js/dropzone.js"></script>
+<link rel="stylesheet" type="text/css" href="/static/css/styles.css">
+<link rel="icon" type="image/png" href="/static/img/favicon.png">
+</head>
+<body>
+<ul id="actions">
+  <li id="save">Saved.</li>
+</ul>
+<h1 id="docTitle" contenteditable="true">{{.Title}}</h1>
+<div id="content" contenteditable="true">{{.Content}}</div>
+<div id="menu"></div>
+<script>
+  var imgCount = 0;
+  var docModified = false;
+  var changeCount = 0;
+
+  function parseContent() {
+    var content = $("#content");
+    var savedSel = rangy.saveSelection();
+
+    $("#content > h1, h2, h3").contents().unwrap();
+
+    var text = $("#content").html();
+
+    var titles = /#+[^<]+/g;
+    var images = /!\[([^\]]*)\]\(\)/g;
+    var anchorId = 0;
+    var menu = "<ol>";
+    var lastLevel = 1;
+
+    // Replace titles
+    var newContent = text.replace(titles, function(match) {
+      anchorId++;
+      var level = 0;
+      while (match[level] === '#')
+        level++;
+
+      if (level > 3) {
+        return match;
+      }
+
+      if (level < lastLevel) {
+        menu += '</ol>';
+      } else if (level > lastLevel) {
+        menu += '<ol>';
+      }
+  
+      lastLevel = level;
+  
+      var title = match.substring(level);
+      menu += '<li><a href="#anchor' + anchorId + '" clas="title' + level + '">'
+              + title + '</a></li>';
+  
+      return '<h' + level + ' id="anchor' + anchorId + '">'
+             + match + '</h' + level + '>';
+    });
+
+    menu += "</ol>";
+
+    // Replace images
+    var newImgs = [];
+    var newContent = newContent.replace(images, function(match, p1) {
+        while ($("#img" + imgCount).length) {
+          imgCount++;
+        }
+        var imgId = imgCount++;
+        newImgs.push(imgId);
+        return '![' + p1 + ']<span class="imgDropdown" id="img' + imgId +
+          '">(Click here to insert image)</span>';
+    });
+
+    $("#menu").html(menu);
+    content.html(newContent);
+    rangy.restoreSelection(savedSel);
+
+    // Insert dropzones
+    $(".imgDropdown").each(function () {
+      var imgId = '#' + $(this).attr('id');
+
+      var newDropzone = new Dropzone(imgId, {
+        url: "/uploadimage/{{.Id}}",
+        createImageThumbnails: false
+        });
+      newDropzone.on('success', function(file, response) {
+          //newDropzone.removeAllFiles();
+          var imageName = response;
+
+          $(imgId).removeClass('dz-clickable');
+          $(imgId).removeClass('dz-started');
+
+          $(imgId).html('(' + imageName + ')'
+            + '<br /><img class="imgPreview" src="/image/{{.Id}}/'
+            + imageName + '" />');
+      });
+    });
+
+    docModified = true;
+    modified();
+  }
+
+  $("#content").on('change keyup paste', function (e) {
+    if (e.type === "keyup") {
+      if (e.which === 13) {
+        parseContent();
+      } else if (e.which >= 48) {
+        modified();
+        docModified = true;
+        ++changeCount;
+
+        if (changeCount > 42) {
+          saveAll();
+        }
+      }
+    }
+  });
+
+  function modified() {
+    $("#save").text("Modified.");
+  }
+
+  function saving() {
+    $("#save").text("Saving.");
+  }
+
+  function saved() {
+    changeCount = 0;
+    isSaving = false;
+    $("#save").text("Saved.");
+  }
+
+  function saveTitle() {
+    var title = $("#docTitle").text();
+
+    saving();
+    $.post("/save", { id: {{ .Id }}, title: title }, saved);
+  }
+
+  var isSaving = false;
+  function saveAll() {
+    if (isSaving || !docModified)
+      return;
+
+    var title = $("#docTitle").text().trim();
+    var content = $("#content").html().trim();
+
+    saving();
+    $.post("/save", { id: {{ .Id }}, title: title, content: content }, saved);
+  }
+
+  $("#docTitle").on('focusout', function() {
+      saveTitle();
+  });
+
+  $("#content").on('focusout', function() {
+      if (docModified) {
+        saveAll();
+      }
+  });
+
+  $(window).load(function() {
+     $("#content").focus();
+     parseContent();
+  });
+</script>
+</body>
+</html>
