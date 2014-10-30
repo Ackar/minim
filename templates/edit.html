@@ -11,6 +11,7 @@
 <link rel="icon" type="image/png" href="/static/img/favicon.png">
 </head>
 <body>
+<a href="/">Home</a><br />
 <ul id="actions">
   <li id="save">Saved.</li>
 </ul>
@@ -88,9 +89,9 @@
       var newDropzone = new Dropzone(imgId, {
         url: "/uploadimage/{{.Id}}",
         createImageThumbnails: false
-        });
+      });
+
       newDropzone.on('success', function(file, response) {
-          //newDropzone.removeAllFiles();
           var imageName = response;
 
           $(imgId).removeClass('dz-clickable');
@@ -101,46 +102,37 @@
             + imageName + '" />');
       });
     });
-
-    docModified = true;
-    modified();
   }
 
-  $("#content").on('change keyup paste', function (e) {
-    if (e.type === "keyup") {
-      if (e.which === 13) {
-        parseContent();
-      } else if (e.which >= 48) {
-        modified();
-        docModified = true;
-        ++changeCount;
+  var lastKey = null;
+  $("#content").on('keyup', function (e) {
+    if (lastKey !== 13 && e.which === 13) {
+      parseContent();
+    } else if (e.which >= 48) {
+      setModified();
+      docModified = true;
+      ++changeCount;
 
-        if (changeCount > 42) {
-          saveAll();
-        }
+      if (changeCount > 100) {
+        saveAll();
       }
     }
+
+    lastKey = e.which;
   });
 
-  function modified() {
+  function setModified() {
     $("#save").text("Modified.");
   }
 
-  function saving() {
+  function setSaving() {
     $("#save").text("Saving.");
   }
 
-  function saved() {
+  function setSaved() {
     changeCount = 0;
     isSaving = false;
     $("#save").text("Saved.");
-  }
-
-  function saveTitle() {
-    var title = $("#docTitle").text();
-
-    saving();
-    $.post("/save", { id: {{ .Id }}, title: title }, saved);
   }
 
   var isSaving = false;
@@ -151,24 +143,21 @@
     var title = $("#docTitle").text().trim();
     var content = $("#content").html().trim();
 
-    saving();
-    $.post("/save", { id: {{ .Id }}, title: title, content: content }, saved);
+    setSaving();
+    $.post("/save", { id: {{ .Id }}, title: title, content: content }, setSaved);
   }
 
   $("#docTitle").on('focusout', function() {
-      saveTitle();
-  });
-
-  $("#content").on('focusout', function() {
-      if (docModified) {
-        saveAll();
-      }
+      saveAll();
   });
 
   $(window).load(function() {
      $("#content").focus();
      parseContent();
   });
+
+  // Automatically save every 30 seconds
+  setInterval(saveAll, 30000);
 </script>
 </body>
 </html>
