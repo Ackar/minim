@@ -4,21 +4,71 @@
 <meta charset="utf-8"/>
 <title>{{.Title}} - Minim</title>
 <script src="/static/js/jquery.min.js"></script>
+<script src="/static/js/jquery.hotkeys.js"></script>
 <script src="/static/js/rangy-core.min.js"></script>
 <script src="/static/js/rangy-selectionsaverestore.min.js"></script>
 <script src="/static/js/dropzone.js"></script>
 <link rel="stylesheet" type="text/css" href="/static/css/styles.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/bootstrap/3.3.0/css/bootstrap.min.css">
 <link rel="icon" type="image/png" href="/static/img/favicon.png">
 </head>
 <body>
-<a href="/">Home</a><br />
+<a href="/" id="home"><span class="glyphicon glyphicon-arrow-left"></span> Home</a><br />
 <ul id="actions">
-  <li id="save">Saved.</li>
+  <li id="save"><span class="glyphicon glyphicon-floppy-saved"></span></li>
 </ul>
 <h1 id="docTitle" contenteditable="true">{{.Title}}</h1>
 <div id="content" contenteditable="true">{{.Content}}</div>
 <div id="menu"></div>
 <script>
+  // As found here: https://stackoverflow.com/questions/6690752/insert-html-at-caret-in-a-contenteditable-div
+  function pasteHtmlAtCaret(html, selectPastedContent) {
+    var sel, range;
+    if (window.getSelection) {
+        // IE9 and non-IE
+        sel = window.getSelection();
+        if (sel.getRangeAt && sel.rangeCount) {
+            range = sel.getRangeAt(0);
+            range.deleteContents();
+
+            // Range.createContextualFragment() would be useful here but is
+            // only relatively recently standardized and is not supported in
+            // some browsers (IE9, for one)
+            var el = document.createElement("div");
+            el.innerHTML = html;
+            var frag = document.createDocumentFragment(), node, lastNode;
+            while ( (node = el.firstChild) ) {
+                lastNode = frag.appendChild(node);
+            }
+            var firstNode = frag.firstChild;
+            range.insertNode(frag);
+
+            // Preserve the selection
+            if (lastNode) {
+                range = range.cloneRange();
+                range.setStartAfter(lastNode);
+                if (selectPastedContent) {
+                    range.setStartBefore(firstNode);
+                } else {
+                    range.collapse(true);
+                }
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        }
+    } else if ( (sel = document.selection) && sel.type != "Control") {
+        // IE < 9
+        var originalRange = sel.createRange();
+        originalRange.collapse(true);
+        sel.createRange().pasteHTML(html);
+        if (selectPastedContent) {
+            range = sel.createRange();
+            range.setEndPoint("StartToStart", originalRange);
+            range.select();
+        }
+    }
+  }
+
   var imgCount = 0;
   var docModified = false;
   var changeCount = 0;
@@ -49,7 +99,9 @@
       }
 
       if (level < lastLevel) {
-        menu += '</ol>';
+        while (lastLevel-- > level) {
+          menu += '</ol>';
+        }
       } else if (level > lastLevel) {
         menu += '<ol>';
       }
@@ -108,7 +160,7 @@
   $("#content").on('keyup', function (e) {
     if (lastKey !== 13 && e.which === 13) {
       parseContent();
-    } else if (e.which >= 48) {
+    } else if (e.which >= 48 && !e.ctrlKey) {
       setModified();
       docModified = true;
       ++changeCount;
@@ -122,23 +174,25 @@
   });
 
   function setModified() {
-    $("#save").text("Modified.");
+    $("#save").html('<span class="glyphicon glyphicon-asterisk"></span>');
   }
 
   function setSaving() {
-    $("#save").text("Saving.");
+    $("#save").html('<span class="glyphicon glyphicon-flash"></span>');
   }
 
   function setSaved() {
     changeCount = 0;
     isSaving = false;
-    $("#save").text("Saved.");
+    $("#save").html('<span class="glyphicon glyphicon-floppy-saved"></span>');
   }
 
   var isSaving = false;
   function saveAll() {
     if (isSaving || !docModified)
       return;
+
+    isSaving = true;
 
     var title = $("#docTitle").text().trim();
     var content = $("#content").html().trim();
@@ -158,6 +212,18 @@
 
   // Automatically save every 30 seconds
   setInterval(saveAll, 30000);
+
+  // Shortcuts
+  $(document).bind('keydown', 'ctrl+s', function() {
+    saveAll();
+    return false;
+  });
+
+  $('#content').bind('keydown', 'ctrl+shift+i', function() {
+    pasteHtmlAtCaret('<br />![caption]()<br />');
+    parseContent();
+    return false;
+  });
 </script>
 </body>
 </html>

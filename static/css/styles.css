@@ -35,10 +35,21 @@ div#content {
     font-size: 1.1em;
   }
 
+
 div#menu {
   position: fixed;
-  top: 10px;
+  top: 50px;
   left: 20px;
+  width: 15%;
+  overflow: hidden;
+  background: aliceblue;
+  padding: 5px;
+}
+
+div#menu a {
+  color: #329abd;
+  font-size: 1.1em;
+  font-family: "Georgia";
 }
 
 hr {
@@ -143,9 +154,14 @@ a {
 
 ul#actions {
   position: fixed;
-  right: 0;
+  right: 10px;
+  top: 10px;
 }
 
+ul#actions li {
+  list-style-type: none;
+  font-size: 1.2em;
+}
 
 body#login h1 {
   margin: 10px auto;
@@ -182,4 +198,10 @@ input[type=submit] {
 
 input[type=submit]:hover {
   background: #226880;
+}
+
+#home {
+  display: block;
+  padding: 5px;
+  margin-bottom: 10px;
 }
