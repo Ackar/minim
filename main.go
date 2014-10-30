@@ -52,7 +52,7 @@ var validEmail = regexp.MustCompile("^.+@.+\\..+$")
 */
 
 func getDocumentPath(id int) string {
-	return fmt.Sprintf("documents/%d/doc", id)
+	return fmt.Sprintf("documents/%d/doc.txt", id)
 }
 
 func getDocumentDir(id int) string {
@@ -64,10 +64,6 @@ func renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-}
-
-func GetAppUrl() string {
-	return "//localhost:8080"
 }
 
 // Return the user email and redirect to the login page if the user is not
@@ -167,11 +163,11 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	passwdSha1 := sha1.Sum([]byte(password))
-	password = string(passwdSha1[:])
+	password = hex.EncodeToString(passwdSha1[:])
 
 	session, _ := store.Get(r, "login")
 	if !hasError && loginButton != "" {
-		rows, err := db.Query("SELECT password FROM emails WHERE email=$1", email)
+		rows, err := db.Query("SELECT password FROM users WHERE email=$1", email)
 		if err != nil {
 			hasError = true
 			login.Error = "Incorrect email and/or password."
@@ -191,7 +187,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !hasError && createButton != "" {
-		err := db.Exec("INSERT INTO emails (email, password) VALUES ($1, $2)", email, password)
+		err := db.Exec("INSERT INTO users (email, password) VALUES ($1, $2)", email, password)
 		if err != nil {
 			hasError = true
 			login.Error = "Unable to create account."
@@ -395,7 +391,7 @@ func NewDocumentHandler(w http.ResponseWriter, r *http.Request) {
 func InitDB() {
 	sqlCreateTable := `
 	create table documents (id INTEGER NOT NULL PRIMARY KEY, email TEXT, title TEXT, last_update DATETIME DEFAULT CURRENT_TIMESTAMP);
-	create table emails (email TEXT NOT NULL PRIMARY KEY, password TEXT NOT NULL);
+	create table users (email TEXT NOT NULL PRIMARY KEY, password TEXT NOT NULL);
 	`
 
 	err := db.Exec(sqlCreateTable)
