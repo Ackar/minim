@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"html/template"
 	"io"
@@ -37,7 +38,7 @@ type Login struct {
 }
 
 var db *sqlite3.Conn
-var store = sessions.NewCookieStore([]byte("something-very-secret"))
+var store = sessions.NewCookieStore(securecookie.GenerateRandomKey(256))
 var templates = template.Must(template.ParseFiles(
 	"templates/index.html",
 	"templates/edit.html",
@@ -50,6 +51,23 @@ var validEmail = regexp.MustCompile("^.+@.+\\..+$")
 	HELPERS
 
 */
+func cp(dst, src string) error {
+	s, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+
+	defer s.Close()
+	d, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(d, s); err != nil {
+		d.Close()
+		return err
+	}
+	return d.Close()
+}
 
 func getDocumentPath(id int) string {
 	return fmt.Sprintf("documents/%d/doc.txt", id)
@@ -383,7 +401,7 @@ func NewDocumentHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Create the new corresponding file
 	os.Mkdir(getDocumentDir(id), 0755)
-	ioutil.WriteFile(getDocumentPath(id), make([]byte, 0), 0644)
+	cp(getDocumentPath(id), "templates/newdoc.txt")
 
 	http.Redirect(w, r, fmt.Sprintf("/edit/%d", id), http.StatusFound)
 }
