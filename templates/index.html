@@ -3,18 +3,22 @@
 <head>
 <meta charset="utf-8"/>
 <title>Minim</title>
-<script src="/static/jquery/dist/jquery.min.js"></script>
+<script src="/static/js/jquery.min.js"></script>
 <link rel="stylesheet" type="text/css" href="/static/css/styles.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/bootstrap/3.3.0/css/bootstrap.min.css">
 <link rel="icon" type="image/png" href="/static/img/favicon.png">
 </head>
 <body>
-<a href="/logout" id="logout">Logout</a>
-<a href="/new" id="newDoc">+ New document</a>
+<ul id="homeMenu">
+  <li><a href="/logout" id="logout"><span class="glyphicon
+      glyphicon-log-out"></span> Logout</a></li>
+  <li><a href="/new">+ New document</a></li>
+</ul>
 <ul id="docList">
   {{range .}}
   <li><a class="title" href="/edit/{{.Id}}">{{.Title}}</a><br />
     <span class="delete"><a href="/delete/{{.Id}}">Delete</a></span>
-    <span class="hidden">Are you sure you want to delete this document?
+    <span class="hiddenelt">Are you sure you want to delete this document?
     <a class="confirm" href="/delete/{{.Id}}">Yes</a> - 
     <a class="cancel" href="">No</a></span></li>
   {{end}}

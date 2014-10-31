@@ -126,7 +126,7 @@ a#newDoc:hover {
   text-decoration: none;
 }
 
-.hidden {
+.hiddenelt {
   display: none;
   padding-top: 10px;
 }
@@ -209,4 +209,14 @@ input[type=submit]:hover {
 
 .dz-preview {
   display: none;
+}
+
+ul#homeMenu {
+  margin: 0;
+  padding: 5px;
+}
+
+ul#homeMenu li {
+  display: inline-block;
+  margin-right: 30px;
 }

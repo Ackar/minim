@@ -322,12 +322,12 @@ func PdfHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	os.Chdir(getDocumentDir(id))
-	err = exec.Command("pandoc", "doc.md", "-o", "doc.pdf", "--toc").Run()
+	output, err := exec.Command("pandoc", "doc.md", "-o", "doc.pdf", "--toc").Output()
+	os.Chdir(currentDir)
 	if err != nil {
-		log.Println("Error while executing pandoc:", err)
+		log.Println("Error while executing pandoc:", err, string(output))
 		return
 	}
-	os.Chdir(currentDir)
 
 	w.Header().Set("Content-Type", "application/pdf")
 	w.Header().Set("Content-Disposition", "inline; filename=\"document.pdf\"")
