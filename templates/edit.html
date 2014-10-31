@@ -16,6 +16,10 @@
 <a href="/" id="home"><span class="glyphicon glyphicon-arrow-left"></span> Home</a><br />
 <ul id="actions">
   <li id="save"><span class="glyphicon glyphicon-floppy-saved"></span></li>
+  <li><a href="/pdf/{{.Id}}"><span class="glyphicon
+      glyphicon-file"></span></a></li>
+  <li><a href="/zip/{{.Id}}"><span class="glyphicon
+      glyphicon-download"></span></a></li>
 </ul>
 <h1 id="docTitle" contenteditable="true">{{.Title}}</h1>
 <div id="content" contenteditable="true">{{.Content}}</div>
@@ -146,6 +150,7 @@
       newDropzone.on('success', function(file, response) {
           var imageName = response;
 
+          setModified();
           $(imgId).removeClass('dz-clickable');
           $(imgId).removeClass('dz-started');
 
@@ -160,9 +165,8 @@
   $("#content").on('keyup', function (e) {
     if (lastKey !== 13 && e.which === 13) {
       parseContent();
-    } else if (e.which >= 48 && !e.ctrlKey) {
+    } else if (e.which >= 32 && !e.ctrlKey) {
       setModified();
-      docModified = true;
       ++changeCount;
 
       if (changeCount > 100) {
@@ -174,6 +178,7 @@
   });
 
   function setModified() {
+    docModified = true;
     $("#save").html('<span class="glyphicon glyphicon-asterisk"></span>');
   }
 
@@ -203,6 +208,7 @@
   }
 
   $("#docTitle").on('focusout', function() {
+      setModified();
       saveAll();
   });
 

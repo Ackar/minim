@@ -1,7 +1,9 @@
 package main
 
 import (
+	"archive/zip"
 	"code.google.com/p/go-sqlite/go1/sqlite3"
+	"code.google.com/p/go.net/html"
 	"code.google.com/p/goconf/conf"
 	"crypto/sha1"
 	"encoding/hex"
@@ -15,6 +17,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -51,6 +54,66 @@ var validEmail = regexp.MustCompile("^.+@.+\\..+$")
 	HELPERS
 
 */
+
+func writeMd(id int) error {
+	rows, err := db.Query("SELECT title FROM documents WHERE id=$1", id)
+	if err != nil {
+		return err
+	}
+	var title string
+	rows.Scan(&title)
+	rows.Close()
+
+	htmlPath := getDocumentPath(id)
+	textPath := getDocumentDir(id) + "/doc.md"
+
+	htmlReader, err := os.Open(htmlPath)
+	if err != nil {
+		return err
+	}
+
+	defer htmlReader.Close()
+
+	textWriter, err := os.Create(textPath)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintf(textWriter, "%% %s\n\n", title)
+
+	tokenizer := html.NewTokenizer(htmlReader)
+
+	for {
+		tt := tokenizer.Next()
+
+		switch tt {
+		case html.ErrorToken:
+			return tokenizer.Err()
+		case html.TextToken:
+			fmt.Fprintf(textWriter, "%s", tokenizer.Text())
+		case html.StartTagToken, html.EndTagToken:
+			tn, _ := tokenizer.TagName()
+			if string(tn) == "br" {
+				fmt.Fprint(textWriter, "\n")
+			}
+		}
+	}
+
+	return textWriter.Close()
+}
+
+func isAllowedExt(ext string) bool {
+	allowedExts := []string{".jpg", ".png", ".gif", ".md"}
+
+	for _, e := range allowedExts {
+		if e == ext {
+			return true
+		}
+	}
+
+	return false
+}
+
 func cp(dst, src string) error {
 	s, err := os.Open(src)
 	if err != nil {
@@ -70,7 +133,7 @@ func cp(dst, src string) error {
 }
 
 func getDocumentPath(id int) string {
-	return fmt.Sprintf("documents/%d/doc.txt", id)
+	return fmt.Sprintf("documents/%d/doc.html", id)
 }
 
 func getDocumentDir(id int) string {
@@ -228,6 +291,121 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
+func PdfHandler(w http.ResponseWriter, r *http.Request) {
+	email := VerifyLogin(w, r)
+
+	if email == "" {
+		return
+	}
+
+	id, err := strconv.Atoi(mux.Vars(r)["id"])
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	if !CheckAuth(r, id) {
+		http.Error(w, http.StatusText(403), 403)
+		return
+	}
+
+	err = writeMd(id)
+	if err != io.EOF {
+		log.Println("Error while writing markdown:", err)
+		return
+	}
+
+	currentDir, err := os.Getwd()
+	if err != nil {
+		log.Println("Unable to get current dir:", err)
+		return
+	}
+
+	os.Chdir(getDocumentDir(id))
+	err = exec.Command("pandoc", "doc.md", "-o", "doc.pdf", "--toc").Run()
+	if err != nil {
+		log.Println("Error while executing pandoc:", err)
+		return
+	}
+	os.Chdir(currentDir)
+
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", "inline; filename=\"document.pdf\"")
+
+	pdfReader, err := os.Open(getDocumentDir(id) + "/doc.pdf")
+
+	_, err = io.Copy(w, pdfReader)
+
+	if err != nil {
+		log.Println("Error while sending pdf:", err)
+		return
+	}
+}
+
+func ZipHandler(w http.ResponseWriter, r *http.Request) {
+	email := VerifyLogin(w, r)
+
+	if email == "" {
+		return
+	}
+
+	id, err := strconv.Atoi(mux.Vars(r)["id"])
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	if !CheckAuth(r, id) {
+		http.Error(w, http.StatusText(403), 403)
+		return
+	}
+
+	err = writeMd(id)
+	if err != io.EOF {
+		log.Println("Error while writing markdown:", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/zip, application/octet-stream")
+	w.Header().Set("Content-Disposition", "attachment; filename=\"document.zip\"")
+
+	zipWriter := zip.NewWriter(w)
+
+	files, err := ioutil.ReadDir(getDocumentDir(id))
+	if err != nil {
+		log.Println("Unable to read dir:", err)
+		return
+	}
+
+	for _, file := range files {
+		ext := filepath.Ext(file.Name())
+
+		if isAllowedExt(ext) {
+			fileWriter, err := zipWriter.Create(file.Name())
+			if err != nil {
+				log.Println("Unable to create writer:", err)
+				return
+			}
+
+			fileReader, err := os.Open(fmt.Sprintf("%s/%s", getDocumentDir(id), file.Name()))
+			if err != nil {
+				log.Println("Unable to create reader:", err)
+				return
+			}
+
+			_, err = io.Copy(fileWriter, fileReader)
+			if err != nil {
+				log.Println("Unable to copy:", err)
+				return
+			}
+
+			fileReader.Close()
+		}
+	}
+
+	zipWriter.Close()
+}
+
 func ImageHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(mux.Vars(r)["id"])
 	if err != nil {
@@ -330,6 +508,11 @@ func EditHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err)
 		http.Redirect(w, r, "/", http.StatusFound)
+		return
+	}
+
+	if !CheckAuth(r, doc.Id) {
+		http.Error(w, http.StatusText(403), 403)
 		return
 	}
 
@@ -452,6 +635,8 @@ func main() {
 	r.HandleFunc("/logout", LogoutHandler)
 	r.HandleFunc("/new", NewDocumentHandler)
 	r.HandleFunc("/save", SaveHandler)
+	r.HandleFunc("/zip/{id:[0-9]+}", ZipHandler)
+	r.HandleFunc("/pdf/{id:[0-9]+}", PdfHandler)
 	r.HandleFunc("/image/{id:[0-9]+}/{name:[.a-z0-9]+}", ImageHandler)
 	r.HandleFunc("/uploadimage/{id:[0-9]+}", UploadImageHandler)
 	r.HandleFunc("/edit/{id:[0-9]+}", EditHandler)
