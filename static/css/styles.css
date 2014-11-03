@@ -162,6 +162,11 @@ ul#actions li {
   list-style-type: none;
   font-size: 1.2em;
   margin-bottom: 10px;
+  text-align: right;
+}
+
+ul#actions li a {
+  margin-left: 100px;
 }
 
 body#login h1 {

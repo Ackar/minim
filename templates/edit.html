@@ -8,17 +8,20 @@
 <script src="/static/js/rangy-core.min.js"></script>
 <script src="/static/js/rangy-selectionsaverestore.min.js"></script>
 <script src="/static/js/dropzone.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
 <link rel="stylesheet" type="text/css" href="/static/css/styles.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/bootstrap/3.3.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css">
 <link rel="icon" type="image/png" href="/static/img/favicon.png">
 </head>
 <body>
 <a href="/" id="home"><span class="glyphicon glyphicon-arrow-left"></span> Home</a><br />
 <ul id="actions">
   <li id="save"><span class="glyphicon glyphicon-floppy-saved"></span></li>
-  <li><a href="/pdf/{{.Id}}"><span class="glyphicon
+  <li><a href="/pdf/{{.Id}}" data-toggle="tooltip" data-placement="left"
+	  title="Display PDF"><span class="glyphicon
       glyphicon-file"></span></a></li>
-  <li><a href="/zip/{{.Id}}"><span class="glyphicon
+  <li><a href="/zip/{{.Id}}" data-toggle="tooltip" data-placement="left"
+	  title="Download zip"><span class="glyphicon
       glyphicon-download"></span></a></li>
 </ul>
 <h1 id="docTitle" contenteditable="true">{{.Title}}</h1>
@@ -109,13 +112,13 @@
       } else if (level > lastLevel) {
         menu += '<ol>';
       }
-  
+
       lastLevel = level;
-  
+
       var title = match.substring(level);
       menu += '<li><a href="#anchor' + anchorId + '" clas="title' + level + '">'
               + title + '</a></li>';
-  
+
       return '<h' + level + ' id="anchor' + anchorId + '">'
              + match + '</h' + level + '>';
     });
@@ -231,6 +234,9 @@
     parseContent();
     return false;
   });
+
+  $('[data-toggle="tooltip"]').tooltip();
+
 </script>
 </body>
 </html>
