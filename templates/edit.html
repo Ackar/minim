@@ -235,6 +235,12 @@
     return false;
   });
 
+  $('#content').bind('keydown', 'ctrl+shift+c', function() {
+    pasteHtmlAtCaret('<br />&lt;!-- --&gt;<br />');
+    parseContent();
+    return false;
+  });
+
   $('[data-toggle="tooltip"]').tooltip();
 
 </script>
