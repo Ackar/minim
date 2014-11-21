@@ -322,7 +322,7 @@ func PdfHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	os.Chdir(getDocumentDir(id))
-	output, err := exec.Command("pandoc", "doc.md", "-o", "doc.pdf", "--toc").Output()
+	output, err := exec.Command("pandoc", "doc.md", "-o", "doc.pdf", "--toc", "--variable", "fontsize=12pt").Output()
 	os.Chdir(currentDir)
 	if err != nil {
 		log.Println("Error while executing pandoc:", err, string(output))

@@ -44,6 +44,9 @@ div#menu {
   overflow: hidden;
   background: aliceblue;
   padding: 5px;
+  height: 90%;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 div#menu a {
