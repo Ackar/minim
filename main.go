@@ -86,14 +86,23 @@ func writeMd(id int) error {
 	for {
 		tt := tokenizer.Next()
 
+		tn, _ := tokenizer.TagName()
+
 		switch tt {
 		case html.ErrorToken:
 			return tokenizer.Err()
 		case html.TextToken:
 			fmt.Fprintf(textWriter, "%s", tokenizer.Text())
-		case html.StartTagToken, html.EndTagToken:
-			tn, _ := tokenizer.TagName()
-			if string(tn) == "br" {
+		case html.StartTagToken:
+      if string(tn) == "br" {
+				fmt.Fprint(textWriter, "\n")
+			}
+    case html.EndTagToken:
+			if string(tn) == "p" {
+				  fmt.Fprint(textWriter, "\n")
+			}
+    case html.SelfClosingTagToken:
+      if string(tn) == "br" {
 				fmt.Fprint(textWriter, "\n")
 			}
 		}
